@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+
+### Changed
+
+- Refreshed package dependencies across backend, frontend, CDK, and the UC008 example CDK app.
+- Restructured the documentation (EN/JA): deployment options and local development moved into dedicated guides, and the README gained a document navigation table and "How It Works" / "Key Features" sections (content-neutral moves).
+- Stopped tracking `cdk/outputs.json` (a deploy-time output) and reorganized `.gitignore`.
+
+### Fixed
+
+- MCP tool preview and review-time MCP execution: stdio MCP servers launched with `uvx` (including the bundled `mcp-server-fetch` example) began dying on import before the handshake ("MCP error -32000: Connection closed") once MCP Python SDK 2.0.0 (2026-07-28, a breaking rework) was released, because many servers declare no upper bound on `mcp`; both container images now ship `mcp-uv-constraints.txt` and constrain uv/uvx dependency resolution to `mcp<2` (remove the constraint once the ecosystem has migrated to 2.x).
+- Getting started: the README now runs `npm ci` in `cdk/` before `npx cdk bootstrap` (bootstrapping loads the CDK app, so the documented command failed on a fresh clone without installing the CDK dependencies first), and the local development guide now syncs the optional `dev` extra before `uv run pytest` (a plain `uv sync` does not install it, so pytest could not start).
+
 ## [1.25.2] - 2026-07-01
 
 ### Added

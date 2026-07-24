@@ -1,11 +1,29 @@
-tasks
+# OS / editor
 .DS_Store
+.vscode
+
+# Dependencies & build output
 node_modules
 dist
-.vscode
-.env
-gitlab.md
-memory-bank/
-.serena
 .venv
+
+# Environment / secrets
+.env
+.env.local
+*.env.local
+
+# Local tooling / task runners
+tasks
+.serena
+memory-bank/
 .playwright-mcp/
+# Kiro session artifacts (specs, settings) — local working files, not committed
+.kiro/
+
+# Personal / machine-local agent workspace (instructions, reports, tools, scratch) — never committed
+.local/
+
+# CDK deploy outputs - environment-specific infrastructure identifiers
+# (account IDs, Cognito pool/client IDs, API/RDS endpoints, ARNs, bucket names).
+# Regenerate per environment with `cdk deploy --outputs-file`; do not commit.
+outputs*.json

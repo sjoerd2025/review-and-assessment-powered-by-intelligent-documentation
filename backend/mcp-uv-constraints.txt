@@ -1,0 +1,15 @@
+# Constraints applied whenever uv/uvx resolves dependencies for MCP servers
+# launched by RAPID (tool preview in the API container, review-time execution
+# in the agent container). Two identical copies exist — keep them in sync:
+#   backend/mcp-uv-constraints.txt
+#   review-item-processor/mcp-uv-constraints.txt
+#
+# Why: MCP Python SDK 2.0.0 (released 2026-07-28) is a breaking rework, and
+# many published MCP servers (for example mcp-server-fetch) declare no upper
+# bound on "mcp". A fresh uvx resolution therefore installs 2.0.0 and the
+# server dies on import before the MCP handshake, which surfaces as
+# "MCP error -32000: Connection closed". Capping mcp below 2 restores those
+# servers without touching user MCP configurations.
+#
+# Relax or remove this once the MCP server ecosystem has migrated to 2.x.
+mcp<2

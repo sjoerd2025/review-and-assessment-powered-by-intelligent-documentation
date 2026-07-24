@@ -97,13 +97,15 @@ export function registerChecklistRoutes(fastify: FastifyInstance): void {
 }
 ```
 
-**routes/handlers.ts**:
+**routes/handlers.ts** — auth middleware populates `request.user`
+(`RequestUser`); pass it through to the use case (most use cases require it
+for ownership / authorization):
 ```typescript
 export const createChecklistSetHandler = async (
   request: FastifyRequest<{ Body: CreateChecklistSetRequest }>,
   reply: FastifyReply
 ): Promise<void> => {
-  await createChecklistSet({ req: request.body });
+  await createChecklistSet({ req: request.body, user: request.user! });
   reply.code(200).send({ success: true, data: {} });
 };
 ```

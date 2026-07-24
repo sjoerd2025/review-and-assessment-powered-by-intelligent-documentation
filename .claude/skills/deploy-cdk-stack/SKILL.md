@@ -70,10 +70,15 @@ Precedence: Command line > parameter.ts > parameter-schema.ts defaults
 
 | Scenario | Commands |
 |----------|----------|
-| Code only | `cd backend && npm run build && cd ../cdk && npx cdk deploy` |
-| Infra only | `cd cdk && npx cdk deploy` |
+| Code only | `cd backend && npm run build && cd ../cdk && npx cdk deploy --all` |
+| Infra only | `cd cdk && npx cdk deploy --all` |
 | Schema change | Deploy + run migration command (see below) |
 | Full stack | Build all + `npx cdk deploy --require-approval never --all` |
+
+> The default (CloudFront) mode synthesizes **two** stacks (`RapidStack` + the
+> us-east-1 `RapidFrontendWafStack`), so a bare `npx cdk deploy` is rejected by
+> the CDK CLI ("specify which stacks to use"). Always pass `--all` (dependency
+> order is resolved by the CLI).
 
 ## Post-Deployment
 
@@ -104,7 +109,7 @@ eval $MIGRATION_COMMAND
 |---------|-------------|
 | `npx cdk synth` | Validate and synthesize templates |
 | `npx cdk diff` | Show changes vs deployed stack |
-| `npx cdk deploy --require-approval never` | Deploy without prompts |
+| `npx cdk deploy --require-approval never --all` | Deploy without prompts |
 | `npx cdk deploy --all` | Deploy all stacks |
 | `npx cdk bootstrap` | Bootstrap CDK (first-time only) |
 

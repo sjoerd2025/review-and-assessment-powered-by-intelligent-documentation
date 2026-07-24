@@ -79,14 +79,19 @@ Quick reference for maintaining visual consistency across the RAPID frontend.
 **Critical**: `cursor-pointer` alone is NOT enough. Elements must LOOK interactive before hovering.
 
 ```tsx
-<button className="
-  cursor-pointer border-2 transition-all
-  border-light-gray dark:border-aws-ui-color-dark
-  hover:border-aws-sea-blue-light dark:hover:border-aws-sea-blue-dark
-  bg-aws-paper-light dark:bg-aws-paper-dark
-">
+{/* Use the shared Button (never a native <button>); it accepts className
+    for affordance styling on top of the variant. */}
+<Button
+  variant="text"
+  size="sm"
+  className="
+    border-2 transition-all
+    border-light-gray dark:border-aws-ui-color-dark
+    hover:border-aws-sea-blue-light dark:hover:border-aws-sea-blue-dark
+    bg-aws-paper-light dark:bg-aws-paper-dark
+  ">
   Interactive Tag
-</button>
+</Button>
 ```
 
 ### Smooth Transitions for Conditional UI

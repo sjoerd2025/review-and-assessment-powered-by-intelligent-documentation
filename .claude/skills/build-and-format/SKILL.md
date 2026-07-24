@@ -32,8 +32,8 @@ After modifying `backend/prisma/schema.prisma`:
 ```bash
 cd backend
 npm run prisma:generate
-npm run build
 npm run format
+npm run build
 ```
 
 ## Common Errors

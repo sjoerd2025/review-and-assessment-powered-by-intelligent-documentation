@@ -1,10 +1,16 @@
 # Review & Assessment Powered by Intelligent Documentation (RAPID)
 
-[English](../../README.md) | [日本語](README_ja.md)
+| ドキュメント                                                        | 言語                                                                                       |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| README（このページ）                                                | [English](../../README.md) \| [日本語](README_ja.md)                                        |
+| デプロイオプション（CloudShell のオプション・閉域網・AI モデル）    | [English](../en/deployment-options.md) \| [日本語](./deployment-options.md)                 |
+| 開発者ガイド（アーキテクチャ・トラブルシューティング）              | [English](../en/developer-guide.md) \| [日本語](./developer-guide.md)                       |
+| ローカル開発（手元でアプリを実行）                                  | [English](../en/local-development.md) \| [日本語](./local-development.md)                   |
+| サンプル集（業界別のサンプルシナリオと書類）                        | [English](../../examples/en/README.md) \| [日本語](../../examples/ja/README.md)             |
 
 このサンプルは生成 AI (Amazon Bedrock) を活用した書類審査ソリューションです。膨大な書類と複雑なチェックリストによる審査業務を、Human in the Loop アプローチで効率化します。チェックリストの構造化から AI による審査、そして人間の最終判断までの一連のプロセスをサポートし、審査時間の短縮と品質向上を実現します。
 
-![](../imgs/ja_summary.png)
+![](../imgs/ja_review_result.png)
 
 > [!Important]
 > このツールは意思決定支援のみを目的としており、専門的判断や法的助言を提供するものではありません。すべての最終判断は適切な資格を持つ人間の専門家が行う必要があります。
@@ -12,47 +18,60 @@
 > [!Warning]
 > 本サンプルは予告なく破壊的な変更を行う恐れがあります。
 
-## 主なユースケース
+## 仕組み
 
-### 製品仕様書の要件適合レビュー
+RAPID では、書類審査を 2 つのフェーズに分けて行います。
 
-製品開発における仕様書が、要求仕様や業界標準を満たしているかを効率的に確認します。年間数千件に及ぶ仕様書を、数百の確認項目と照合する作業を自動化。AI が仕様書から関連情報を抽出・構造化し、要件との照合結果を可視化。レビュアーは効率的に最終確認を行えます。
+1. **チェックリストを作成** — 規程・ガイドライン・仕様書など、書類のどの箇所をどうチェックするかを示した書類（PDF）をアップロードすると、AI が審査項目をチェックリストとして抽出します。
+2. **審査を実行** — 審査対象の書類（PDF・画像）をアップロードして突合させるチェックリストを選ぶと、AI が各項目を**合格／不合格で判定し**、信頼度スコア・AI の判断理由・参照した書類を提示します。
 
-### 技術マニュアルの品質確認
+RAPID は AWS のサーバーレスサービス（Amazon CloudFront、API Gateway + Lambda、Step Functions、Aurora Serverless v2、Amazon Bedrock / AgentCore）で構成されています。アーキテクチャ図は[開発者ガイド](./developer-guide.md#アーキテクチャ)をご覧ください。
 
-複雑な技術マニュアルが社内ガイドラインや業界標準に準拠しているかを確認します。年間数万ページの技術文書を、数千項目の品質基準と照合する作業を支援。必要な技術情報の記載漏れや矛盾を自動検出し、一貫性のある高品質なマニュアル作成をサポートします。
+## 主な機能
 
-### 調達文書のコンプライアンス確認
+- **AI によるチェックリスト抽出** — 規程・ガイドライン・仕様書などをチェックリストへ自動変換します。
+- **AI による書類審査** — チェック項目ごとに合格／不合格を判定し、信頼度スコア・AI の判断理由・参照した書類をあわせて提示します。
+- **チェック項目ごとのモデル選択** — チェック項目ごとに任意の生成 AI モデルを割り当てられるため、難しい項目にだけ高精度なモデルを使うといった使い分けができます。
+- **エージェントツール** — 外部ツールの知識が必要なチェック項目には、**Amazon Bedrock Knowledge Bases**（RAG）、**AgentCore Code Interpreter**（計算・検証のためのコード実行）、**MCP（Model Context Protocol）** サーバをオプションで付与できます。
+- **プロンプトのカスタマイズ** — チェックリスト抽出に使うシステムプロンプトを、専用の「プロンプト管理」画面から確認・編集できます。
+- **業界別サンプルギャラリー** — 不動産・IT・製造・医療・コーポレートガバナンスなど、業界別のサンプルシナリオを内蔵しており、RAPID による書類審査をすぐに試せます。
+- **閉域網デプロイ** — RAPID をインターネットに公開せずに運用できます。**AWS Site-to-Site VPN** や **AWS Direct Connect** と組み合わせることで、オンプレミスのネットワークから完全にプライベートな通信で利用できます。詳細は[閉域網デプロイ](#閉域網デプロイ)をご覧ください。
+- **同時実行数の制御** — 同時実行数を制御し、Amazon Bedrock のクォータ内に収まるように審査を実行します。
 
-調達文書や提案書が必要な要件を満たしているかをチェックします。数百ページにわたる文書から必要情報を自動抽出し、年間数万件のドキュメントレビューを効率化。要件リストとの照合結果を人間が最終確認することで、調達プロセスのスピードと精度を向上させます。
-
-## スクリーンショット
+<details>
+<summary><strong>主要画面のスクリーンショット</strong>（クリックで展開）</summary>
 
 ![](../imgs/ja_new_review.png)
+
 ![](../imgs/ja_new_review_floor_plan.png)
+
 ![](../imgs/ja_review_result.png)
+
 ![](../imgs/ja_review_result_ng.png)
+
+</details>
+
+## 主なユースケース
+
+- **製品仕様書の要件適合審査** — 仕様書が要求仕様や業界標準を満たしているかの確認を効率化し、レビュアーは最終確認に集中できます。
+- **技術マニュアルの品質確認** — 技術マニュアルが社内ガイドラインや業界標準に準拠しているかを確認し、記載漏れや矛盾を自動で検出します。
+- **調達文書のコンプライアンス確認** — 数百ページにわたる調達文書や提案書から必要な情報を自動で抽出し、照合結果を人間が最終確認します。
+
+サンプル書類つきの具体的なシナリオは[サンプル集](../../examples/ja/README.md)で公開しています。
 
 ## デプロイ方法
 
-デプロイには以下の 2 つの方法があります：
-
 ### 1. CloudShell を使用したデプロイ（簡単に始めたい方向け）
 
-ローカル環境の準備が不要で、AWS CloudShell を使用してブラウザから簡単に直接デプロイできる方法です。
+ローカル環境の準備が不要で、AWS CloudShell を使用してブラウザから直接デプロイできる方法です。
 
 1. **Amazon Bedrock モデルの有効化**
 
-   AWS Management Console から Bedrock モデルアクセスにアクセスし、以下のモデルへのアクセスを有効化してください：
-
-   - Anthropic Claude 3.7 Sonnet
-   - Amazon Nova Premier
-
-   デフォルトではオレゴン (us-west-2) リージョンを使用しますが、`--bedrock-region` オプションで変更可能です。
+   AWS Management Console から Bedrock モデルアクセスにアクセスし、利用するモデルへのアクセスを有効化してください（モデルの一覧は [AI モデルのカスタマイズ](./deployment-options.md#ai-モデルのカスタマイズ)をご覧ください）。デフォルトではオレゴン (us-west-2) リージョンを使用しますが、`--bedrock-region` オプションで変更可能です。
 
 2. **AWS CloudShell を開く**
 
-   [AWS CloudShell](https://console.aws.amazon.com/cloudshell/home)をデプロイしたいリージョンで開きます。
+   [AWS CloudShell](https://console.aws.amazon.com/cloudshell/home) をデプロイしたいリージョンで開きます。
 
 3. **デプロイスクリプトの実行**
 
@@ -60,81 +79,62 @@
    wget -O - https://raw.githubusercontent.com/aws-samples/review-and-assessment-powered-by-intelligent-documentation/main/bin.sh | bash
    ```
 
-   このワンライナーコマンドで、リポジトリのクローンからデプロイまでが自動的に実行されます。
+   このコマンドで、リポジトリのクローンからデプロイまでが自動的に実行されます。デプロイが完了するとフロントエンド URL と API の URL が表示されるので、フロントエンド URL にブラウザからアクセスして利用を開始できます。
 
-4. **カスタムパラメータの指定（オプション）**
+4. **カスタムオプションの指定（任意）**
 
    ```bash
    wget -O - https://raw.githubusercontent.com/aws-samples/review-and-assessment-powered-by-intelligent-documentation/main/bin.sh | bash -s -- --ipv4-ranges '["192.168.0.0/16"]'
    ```
 
-   利用可能なオプション：
-
-   - `--ipv4-ranges`: フロントエンド WAF で許可する IPv4 アドレス範囲（JSON 配列形式）
-   - `--ipv6-ranges`: フロントエンド WAF で許可する IPv6 アドレス範囲（JSON 配列形式）
-   - `--disable-ipv6`: IPv6 サポートを無効にする
-   - `--auto-migrate`: デプロイ時に自動的にデータベースマイグレーションを実行するかどうか
-   - `--cognito-self-signup`: Cognito User Pool のセルフサインアップを有効にするかどうか（true/false）
-   - `--cognito-user-pool-id`: 既存の Cognito User Pool ID（指定しない場合は新規作成）
-   - `--cognito-user-pool-client-id`: 既存の Cognito User Pool Client ID（指定しない場合は新規作成）
-   - `--cognito-domain-prefix`: Cognito ドメインのプレフィックス（指定しない場合は自動生成）
-   - `--mcp-admin`: MCP ランタイム Lambda 関数に管理者権限を付与するかどうか（true/false）
-   - `--s3-api-gateway-frontend`: CloudFront の代わりに REGIONAL API Gateway 経由で SPA を配信するかどうか（true/false）
-   - `--closed-network`: 完全プライベート（分離サブネット、VPC エンドポイント、PRIVATE API Gateway）でデプロイするかどうか。`--s3-api-gateway-frontend` を含意（true/false）
-   - `--agentcore-network-mode`: クローズド時の AgentCore Runtime ネットワークモード（`PUBLIC` = インターネットあり / MCP 対応、`VPC` = 完全分離）。デフォルト: `PUBLIC`
-   - `--bedrock-region`: Amazon Bedrock を利用するリージョン（デフォルト：us-west-2）
-   - `--document-model`: ドキュメント処理に使用する AI モデル ID（デフォルト：us.anthropic.claude-3-7-sonnet-20250219-v1:0）
-   - `--image-model`: 画像レビューに使用する AI モデル ID（デフォルト：us.anthropic.claude-3-7-sonnet-20250219-v1:0）
-   - `--repo-url`: デプロイするリポジトリの URL
-   - `--branch`: デプロイするブランチ名
-   - `--tag`: デプロイする特定の Git タグ
-
-5. **デプロイ後の確認**
-
-   デプロイが完了すると、フロントエンド URL と API の URL が表示されます。
-   表示された URL にアクセスして、アプリケーションを利用開始できます。
+   `--ipv4-ranges` や `--closed-network` などのオプションは、[パラメータカスタマイズ](#パラメータカスタマイズ)で説明する CDK パラメータに対応しています。オプションの一覧は [CloudShell デプロイのオプション](./deployment-options.md#cloudshell-デプロイのオプション)をご覧ください。
 
 > [!Important]
-> このデプロイ方法では、オプションパラメータを設定しない場合、URL を知っている誰でもサインアップできます。本番環境での使用には、IP アドレス制限の追加やセルフサインアップの無効化 (`--cognito-self-signup=false`) を強くお勧めします。
+> このデプロイ方法では、オプションパラメータを設定しない場合、URL を知っている誰もがサインアップできます。本番環境で使用する場合は、IP アドレス制限の追加とセルフサインアップの無効化（`--cognito-self-signup false`）を強く推奨します。
 
 ### 2. ローカル環境からのデプロイ（カスタマイズが必要な場合に推奨）
 
-- このリポジトリをクローン
+> [!Note]
+> この方法では、ローカルに **Docker** がインストールされ、起動している必要があります。CDK のビルドで複数の Lambda 関数をコンテナイメージとしてバンドルするためです（Prisma データベースマイグレーション、審査処理、AgentCore ランタイム）。併せて、Node.js と対象アカウント／リージョンへの権限を持つ AWS 認証情報も必要です。
+
+- このリポジトリをクローンします。
 
 ```
 git clone https://github.com/aws-samples/review-and-assessment-powered-by-intelligent-documentation.git
-```
-
-- バックエンドの準備
-
-```
 cd review-and-assessment-powered-by-intelligent-documentation
 ```
 
-- 必要に応じて、[parameter.ts](./cdk/lib/parameter.ts) を編集してください。詳細は[パラメータカスタマイズ](#パラメータカスタマイズ)をご覧ください。
-- CDK をデプロイする前に、デプロイ先のリージョンに対して一度ブートストラップを実行する必要があります。
+- 必要に応じて [parameter.ts](../../cdk/lib/parameter.ts) を編集します。詳細は[パラメータカスタマイズ](#パラメータカスタマイズ)をご覧ください。
+- 初回のデプロイ前に、デプロイ先のリージョンに対して一度だけブートストラップを実行します。export した `AWS_DEFAULT_REGION` は bootstrap と deploy の両方に適用されます。`npx cdk bootstrap aws://<account-id>/<region>` の形式で、コマンドごとにリージョンを指定することもできます。ブートストラップの前に `cdk/` で `npm ci` を実行してください。`cdk bootstrap` は `cdk/bin/rapid.ts` の CDK アプリを読み込むため、クローン直後（依存関係が未インストール）では AWS へ到達する前に失敗します。CloudFront 用の WAF スタックのために `us-east-1` も同時にブートストラップされます（S3 + API Gateway 構成・閉域構成では当該スタックを作らないため対象外です）。
 
 ```
 cd cdk
+npm ci
+export AWS_DEFAULT_REGION="<region>"
 npx cdk bootstrap
 ```
 
-- デプロイ（全パッケージのビルドとデプロイを自動で実行します）
+- デプロイします（全パッケージのビルドとデプロイを自動で実行します）。
 
 ```
+cd cdk
 npm run deploy
 ```
 
 <details><summary>手動でステップごとにデプロイする場合</summary>
 
+バックエンドを準備します。
+
 ```bash
-# バックエンドの準備
 cd backend
 npm ci
 npm run prisma:generate
 npm run build
+```
 
-# CDK パッケージのインストールとデプロイ
+続いて CDK パッケージをインストールし、デプロイします。
+
+```bash
 cd ../cdk
 npm ci
 npx cdk deploy --require-approval never --all
@@ -142,7 +142,7 @@ npx cdk deploy --require-approval never --all
 
 </details>
 
-- 以下のような出力が表示されます。Web アプリの URL は `RapidStack.FrontendURL` に出力されますので、ブラウザからアクセスしてください。
+- 以下のような出力が表示されます。Web アプリの URL は `RapidStack.FrontendURL` に出力されるので、ブラウザからアクセスしてください。
 
 ```sh
  ✅  RapidStack
@@ -154,205 +154,119 @@ Output:
 RapidStack.FrontendURL = https://xxxxx.cloudfront.net
 ```
 
+### 後片付け（スタックの削除）
+
+このサンプルが作成したリソースをすべて削除し、課金を止めるには、2 つの CDK スタックを削除します。`cdk` ディレクトリで次を実行してください。
+
+```bash
+cd cdk
+npx cdk destroy --all
+```
+
+`--all` を付けると、CDK が依存関係の順序でスタックを削除します（`RapidStack` を先に、**us-east-1** にある `RapidFrontendWafStack` を後に削除します）。
+
+> [!Warning]
+> 本サンプルは Demo/PoC 向けの構成です。S3 バケット、Aurora データベース、および（スタックが新規作成した場合の）Cognito User Pool は、**保存データやユーザーアカウントも含めて** destroy で削除されます。保持設定や削除保護は行っていません。必要なものは事前にバックアップし、実運用では削除ポリシーの変更を検討してください。
+
+インポートした Cognito User Pool、一部の CloudWatch Logs ロググループ、CloudShell デプロイが作成する `RapidCodeBuildDeploy` スタックなど、いくつかのリソースは自動では削除されません。また VPC モードでは、サービス管理の ENI が解放されるまで `cdk destroy` が一時的に `DELETE_FAILED` になることがあります。いずれも[後片付けの詳細](./deployment-options.md#後片付けの詳細)をご覧ください。
+
 ## パラメータカスタマイズ
 
-CDK デプロイ時に以下のパラメータをカスタマイズできます:
+CDK デプロイ時に以下のパラメータをカスタマイズできます。[`cdk/lib/parameter.ts`](../../cdk/lib/parameter.ts) を編集してください。
 
-| パラメータグループ     | パラメータ名                  | 説明                                                                                                                                                                   | デフォルト値                              |
-| ---------------------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| **WAF 設定**           | allowedIpV4AddressRanges      | フロントエンド WAF で許可する IPv4 範囲                                                                                                                                | ["0.0.0.0/1", "128.0.0.0/1"] (すべて許可) |
-|                        | allowedIpV6AddressRanges      | フロントエンド WAF で許可する IPv6 範囲                                                                                                                                | ["0000::/1", "8000::/1"] (すべて許可)     |
-| **Cognito 設定**       | cognitoUserPoolId             | 既存の Cognito User Pool ID                                                                                                                                            | 新規作成                                  |
-|                        | cognitoUserPoolClientId       | 既存の Cognito User Pool Client ID                                                                                                                                     | 新規作成                                  |
-|                        | cognitoDomainPrefix           | Cognito ドメインのプレフィックス                                                                                                                                       | 自動生成                                  |
-|                        | cognitoSelfSignUpEnabled      | Cognito User Pool のセルフサインアップを有効にするかどうか                                                                                                             | true (有効)                               |
-| **マイグレーション**   | autoMigrate                   | デプロイ時に自動的にマイグレーションを実行するかどうか                                                                                                                 | true (自動実行する)                       |
-| **MCP 機能**           | mcpAdmin                      | MCP ランタイム Lambda 関数に管理者権限を付与するかどうか ([詳細](./mcp-features.md))                                                                                   | false (無効)                              |
-| **Citations API**      | enableCitations               | PDF ドキュメントの Citations API を有効にするかどうか ([AWS 発表](https://aws.amazon.com/about-aws/whats-new/2025/06/citations-api-pdf-claude-models-amazon-bedrock/)) | true (有効)                               |
-| **Map State 並行処理** | reviewMapConcurrency          | レビュープロセッサの Map State 並行処理数 (スロットリングと相談して設定が必要)                                                                                         | 1                                         |
-| **Map State 並行処理** | checklistInlineMapConcurrency | チェックリストプロセッサーのインライン Map State 並行処理数 (スロットリングと相談して設定が必要)                                                                         | 1                                         |
-| **モデル選択**         | availableModels                      | チェックリスト項目ごとに選択可能なモデル一覧。空配列 `[]` に設定するとモデル選択UIが非表示になる                                                              | Claude Opus 4.6, Claude Sonnet 4.6, Claude Haiku 4.5, Claude Sonnet 4 |
-| **ネットワークモード** | s3ApiGatewayFrontend          | CloudFront の代わりに専用の REGIONAL API Gateway（S3 プロキシ）経由で SPA を配信する。ネットワーク構成は標準のまま                                                     | false                                     |
-| **ネットワークモード** | closedNetwork                 | 完全プライベートモード: 分離サブネット、NAT なし、VPC エンドポイント、PRIVATE API Gateway、Cognito PrivateLink。`s3ApiGatewayFrontend` を含意する          | false                                     |
-| **ネットワークモード** | agentCoreNetworkMode          | AgentCore Runtime のネットワークモード（`closedNetwork` 時のみ適用）。`PUBLIC` = ランタイムにインターネットあり（MCP/uv 動作）、`VPC` = ランタイム完全分離。呼び出し経路はいずれもプライベート | PUBLIC                                    |
-| **スケジュール設定**   | feedbackAggregatorScheduleExpression | Feedback Aggregator の実行スケジュール（EventBridge Scheduler expression 形式）                                                                              | cron(0 2 * * ? *) (毎日 2:00 UTC)         |
+| パラメータグループ     | パラメータ名                         | 説明                                                                                                                                                                   | デフォルト値                              |
+| ---------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **WAF 設定**           | allowedIpV4AddressRanges             | フロントエンド WAF で許可する IPv4 範囲                                                                                                                                | ["0.0.0.0/1", "128.0.0.0/1"] (すべて許可) |
+|                        | allowedIpV6AddressRanges             | フロントエンド WAF で許可する IPv6 範囲                                                                                                                                | ["0000::/1", "8000::/1"] (すべて許可)     |
+| **Cognito 設定**       | cognitoUserPoolId                    | 既存の Cognito User Pool ID                                                                                                                                            | 新規作成                                  |
+|                        | cognitoUserPoolClientId              | 既存の Cognito User Pool Client ID                                                                                                                                     | 新規作成                                  |
+|                        | cognitoDomainPrefix                  | Cognito ドメインのプレフィックス                                                                                                                                       | 自動生成                                  |
+|                        | cognitoSelfSignUpEnabled             | Cognito User Pool のセルフサインアップを有効にするかどうか                                                                                                             | true (有効)                               |
+| **マイグレーション**   | autoMigrate                          | デプロイ時に自動的にデータベースマイグレーションを実行するかどうか                                                                                                     | true (自動実行する)                       |
+| **MCP 機能**           | mcpAdmin                             | MCP ランタイム Lambda 関数に管理者権限を付与するかどうか                                                                                                               | false (無効)                              |
+| **Citations API**      | enableCitations                      | PDF ドキュメントの Citations API を有効にするかどうか ([AWS 発表](https://aws.amazon.com/about-aws/whats-new/2025/06/citations-api-pdf-claude-models-amazon-bedrock/)) | true (有効)                               |
+| **モデル選択**         | availableModels                      | チェックリスト項目ごとに選択可能なモデル一覧。空配列 `[]` に設定するとモデル選択 UI が非表示になる                                                                     | Claude Opus 4.6, Claude Sonnet 4.6, Claude Haiku 4.5, Claude Sonnet 4 |
+| **ネットワークモード** | s3ApiGatewayFrontend                 | CloudFront の代わりに専用の REGIONAL API Gateway（S3 プロキシ）経由で SPA を配信する。ネットワーク構成は標準のまま。詳細は[閉域網デプロイ](#閉域網デプロイ)をご覧ください。 | false                                     |
+|                        | closedNetwork                        | 完全プライベートモード: 分離サブネット、NAT なし、VPC エンドポイント、PRIVATE API Gateway、Cognito PrivateLink。`s3ApiGatewayFrontend` を含意する。詳細は[閉域網デプロイ](#閉域網デプロイ)をご覧ください。 | false                                     |
+|                        | agentCoreNetworkMode                 | AgentCore Runtime のネットワークモード（`closedNetwork` 時のみ適用）。`PUBLIC` = ランタイムにインターネットあり（MCP/uv 動作）、`VPC` = ランタイム完全分離。呼び出し経路はいずれもプライベート | PUBLIC                                    |
+| **Map State 並行処理** | reviewMapConcurrency                 | レビュープロセッサの Map State 並行処理数 (スロットリングと相談して設定が必要)                                                                                         | 1                                         |
+|                        | checklistInlineMapConcurrency        | チェックリストプロセッサーのインライン Map State 並行処理数 (スロットリングと相談して設定が必要)                                                                       | 1                                         |
+| **審査キュー設定**     | reviewMaxConcurrency                 | 審査キューコンシューマの Step Functions 同時実行数の上限                                                                                                               | 2                                         |
+|                        | reviewQueueMaxDepth                  | API がグローバル同時実行数エラーを返すまでのキューの最大深さ                                                                                                           | 10                                        |
+|                        | reviewQueueMaxQueueCountMs           | 審査キューコンシューマがエラー処理に移るまでの最大待機時間（ミリ秒）                                                                                                   | 86,400,000 (24時間)                       |
+|                        | reviewQueueLogLevel                  | 審査キュー Lambda のログレベル                                                                                                                                         | WARNING                                   |
+| **スケジュール設定**   | feedbackAggregatorScheduleExpression | Feedback Aggregator の実行スケジュール（EventBridge Scheduler expression 形式）                                                                                        | cron(0 2 * * ? *) (毎日 2:00 UTC)         |
 
 **Schedule Expression 形式:**
+
 - Cron 形式: `cron(分 時 日 月 曜日 年)` - 例: `cron(0 2 * * ? *)` (毎日 2:00 UTC)
-- Rate 形式: `rate(値 単位)` - 例: `rate(1 day)` (1 日ごと), `rate(12 hours)` (12 時間ごと)
+- Rate 形式: `rate(値 単位)` - 例: `rate(1 day)` (毎日)、`rate(12 hours)` (12 時間ごと)
 - 詳細: [Schedule types on EventBridge Scheduler](https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html)
 
-### クローズド / プライベートネットワークデプロイ
+> [!Caution]
+> デフォルト値は、本番運用での堅牢さよりも簡単に試せることを優先しています。
+>
+> - **WAF の IP 制限**: 既定値は**すべての** IP アドレスを許可します。本番環境では、許可したい具体的な IP 範囲を設定してください。
+> - **セルフサインアップ**は既定で有効です。本番環境では `cognitoSelfSignUpEnabled: false` の設定を強く推奨します。有効のままにすると、URL に到達した誰もがアカウント登録できます。
+> - **autoMigrate** はデプロイのたびに自動でデータベースマイグレーションを実行します。本番環境や重要なデータを含む環境では、`false` に設定してマイグレーションを手動で制御することを検討してください。
 
-デフォルトでは**パブリック**にデプロイされます（CloudFront + S3、インターネットから到達可能）。
-以下 2 つのオプションパラメータで、フロントエンドの配信方法とネットワーク分離の有無を変更できます:
+### 閉域網デプロイ
 
-- **`s3ApiGatewayFrontend`**（デフォルト `false`）: CloudFront の代わりに REGIONAL API Gateway（S3 プロキシ）
-  経由で SPA を配信します。依然としてパブリックで、ネットワークは標準（NAT）のままです。CloudFront を
-  使わない場合に有用です。
-- **`closedNetwork`**（デフォルト `false`）: 完全に**プライベート**なデプロイ — NAT / インターネットゲートウェイ
-  のない分離サブネット、すべての AWS アクセスを VPC エンドポイント経由（Bedrock、`bedrock-agentcore`、S3、
-  Cognito PrivateLink 等）、VPC エンドポイントにロックした PRIVATE API Gateway、API ステージへの REGIONAL WAF。
-  これは自動的に `s3ApiGatewayFrontend` を含意します（閉域ネットワークでは CloudFront を使用できないため）。
-- **`agentCoreNetworkMode`**（デフォルト `PUBLIC`）: クローズドモードでの AgentCore Runtime のネットワーク
-  モードを制御します（下記のトレードオフを参照）。
+`closedNetwork: true` を設定すると、RAPID を完全閉域構成でデプロイします。VPC は isolated サブネットのみ（NAT／インターネットゲートウェイなし）で構成され、実行時の AWS アクセスは VPC エンドポイント経由になり、2 つの API Gateway はいずれも PRIVATE エンドポイントになります。アプリケーションへは VPC 内部からのみアクセスできます。たとえば AWS Client VPN・AWS Site-to-Site VPN・AWS Direct Connect で VPC に接続したオンプレミスのネットワークから利用します。CloudFront を避けつつ公開は維持したい場合は、代わりに `s3ApiGatewayFrontend: true` を使用してください。
 
-いずれも `cdk/lib/parameter.ts`（または `-c`、例: `npx cdk deploy -c rapid.closedNetwork=true`）、
-または CloudShell スクリプトのフラグ `--s3-api-gateway-frontend` / `--closed-network` で設定できます。
-
-`closedNetwork: true` の場合:
-
-- **デプロイ時のインターネット接続は依然として必要です**（コンテナイメージのビルド/プッシュ、フロントエンドビルドのため）。
-  分離されるのはデプロイ済みリソースの*実行時*のネットワーク経路のみです。完全オフラインのデプロイは対象外です。
-- **アクセスは VPC 内からのみ** — PRIVATE API はパブリックインターネットから到達できません。VPC ネットワーク上のホスト
-  （ブラウザ付き EC2、Client VPN 等）からアクセスしてください。
-- **認証**: Cognito PrivateLink エンドポイント経由ではユーザー名/パスワード（SRP）サインインのみ動作します。
-  ホスト UI / OAuth / フェデレーションサインインは**未対応**。GovCloud では利用不可。
-- **AgentCore Runtime ネットワークモード**（`agentCoreNetworkMode`、デフォルト `PUBLIC`）: エージェントランタイムを
-  AWS 管理ネットワークで実行する（`PUBLIC`）か、分離 VPC 内で実行する（`VPC`）かを制御します。いずれの場合も
-  呼び出し経路（Lambda → AgentCore）は `bedrock-agentcore` VPC エンドポイント経由で常にプライベートです。
-  ランタイムのコンピュート自体にインターネットアクセスを禁止する必要がなければ `PUBLIC`（デフォルト）を使用してください。**トレードオフ:**
-  - `PUBLIC`: ランタイムにインターネットあり — stdio/パブリック HTTP の **MCP ツール** と `uv`/`npx` の実行時フェッチが動作。
-  - `VPC`: ランタイムに**インターネットなし** — stdio / パブリック HTTP MCP ツールは動作せず、VPC 内 HTTP MCP
-    サーバーまたは AgentCore Gateway MCP ツールのみ動作。最大限の分離。
-- **`bedrockRegion` はデプロイリージョンと一致させる必要があります** — `bedrock-runtime` エンドポイントは別リージョンへ
-  プライベート到達できません。`global.*` プロファイルは動作しますがデータがクロスリージョンにルーティングされる
-  可能性があり（synth 時に警告）、データレジデンシーにはリージョン固定 ID を使用してください。
-- **`closedNetwork` の有効/無効の切り替えはインプレースではできません** — VPC トポロジ変更により置換が発生します。
-  新しいスタック/リージョンにデプロイしてください（事前に `cdk diff`、destroy 前に Aurora のスナップショットを取得）。
+閉域モードには、デプロイの実行時にはインターネットアクセスが必要であること、認証が Cognito の SRP 方式に限定されること、既存スタックでのモード切り替えは VPC の置換を伴うことなど、いくつかの制約があります。有効化する前に必ず[閉域網デプロイの詳細](./deployment-options.md#閉域網デプロイ)をご確認ください。
 
 ### AI モデルのカスタマイズ
 
-このアプリケーションは Strands エージェントがファイル読み込みなどのツールを使用するため、**ツール使用に対応したモデル**を選択する必要があります。
-
-**ツール使用対応モデルの例**:
-
-- `us.anthropic.claude-sonnet-4-20250514-v1:0` (Claude 4 Sonnet US)
-- `eu.anthropic.claude-sonnet-4-20250514-v1:0` (Claude 4 Sonnet EU)
-- `apac.anthropic.claude-sonnet-4-20250514-v1:0` (Claude 4 Sonnet APAC)
-- `global.anthropic.claude-sonnet-4-5-20250929-v1:0` (Claude 4.5 Sonnet Global)
-- `us.anthropic.claude-sonnet-4-5-20250929-v1:0` (Claude 4.5 Sonnet US)
-- `eu.anthropic.claude-sonnet-4-5-20250929-v1:0` (Claude 4.5 Sonnet EU)
-- `jp.anthropic.claude-sonnet-4-5-20250929-v1:0` (Claude 4.5 Sonnet JP)
-- `global.anthropic.claude-sonnet-4-20250514-v1:0` (Claude 4 Sonnet Global)
-- `us.anthropic.claude-sonnet-4-20250514-v1:0` (Claude 4 Sonnet US)
-- `eu.anthropic.claude-sonnet-4-20250514-v1:0` (Claude 4 Sonnet EU)
-- `apac.anthropic.claude-sonnet-4-20250514-v1:0` (Claude 4 Sonnet APAC)
-- `mistral.mistral-large-2407-v1:0` (Mistral Large 2)
-- `us.anthropic.claude-3-5-sonnet-20241022-v2:0` (Claude 3.5 Sonnet)
-- `us.amazon.nova-premier-v1:0` (Amazon Nova Premier)
-- `us.amazon.nova-2-omni-v1:0` (Amazon Nova 2 Omni)
-
-**重要な注意事項**:
-
-- **Cross-region inference profiles**: Cross-region inference を利用する場合は、`us.`, `eu.`, `apac.` などの地域プレフィックス付きモデル ID が必須です
-
-- **公式ドキュメント**: [Amazon Bedrock でサポートされているモデルと機能](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference-supported-models-features.html)
-
-**設定例**:
-
-```typescript
-// cdk/lib/parameter.ts
-export const parameters = {
-  documentProcessingModelId: "us.anthropic.claude-sonnet-4-20250514-v1:0", // Claude 4 Sonnet US
-  bedrockRegion: "us-west-2", // オレゴンリージョン
-  // ...
-};
-```
-
-設定するには`cdk/lib/parameter.ts` ファイルを直接編集してください。
-
-### チェックリスト項目ごとのモデル選択
-
-デフォルトでは、各チェックリスト項目に `availableModels` リストから特定の AI モデルを割り当てることができます。デフォルトのモデルセットには Claude Opus 4.6、Sonnet 4.6、Haiku 4.5、Sonnet 4 (Global) が含まれています。項目にモデルが選択されていない場合、ドキュメントには `documentProcessingModelId`（デフォルト: `global.anthropic.claude-sonnet-4-20250514-v1:0`）、画像には `imageReviewModelId`（デフォルト: `global.anthropic.claude-sonnet-4-20250514-v1:0`）が自動的に使用されます。
-
-利用可能なモデルをカスタマイズするには:
-
-```typescript
-// cdk/lib/parameter.ts
-export const parameters = {
-  availableModels: [
-    { modelId: "global.anthropic.claude-opus-4-6-v1", displayName: "Claude Opus 4.6 (Global)" },
-    { modelId: "global.anthropic.claude-sonnet-4-6", displayName: "Claude Sonnet 4.6 (Global)" },
-    { modelId: "global.anthropic.claude-haiku-4-5-20251001-v1:0", displayName: "Claude Haiku 4.5 (Global)" },
-    { modelId: "global.anthropic.claude-sonnet-4-20250514-v1:0", displayName: "Claude Sonnet 4 (Global)" },
-  ],
-};
-```
-
-モデル選択 UI を完全に無効にするには、`availableModels` を空配列に設定します:
-
-```typescript
-export const parameters = {
-  availableModels: [],
-};
-```
-
-> [!CAUTION]
-> 本番環境では、`cognitoSelfSignUpEnabled: false` に設定することでセルフサインアップを無効化することを強く推奨します。セルフサインアップを有効にしたままにすると、誰でもアカウント登録が可能となるため、セキュリティリスクとなる可能性があります。
-> デフォルトでは `autoMigrate` パラメータが `true` に設定されており、デプロイ時に自動的にデータベースマイグレーションが実行されます。本番環境や重要なデータを含む環境では、このパラメータを `false` に設定し、マイグレーションを手動で制御することを検討してください。
+RAPID では Strands エージェントがファイル読み込みなどのツールを使用するため、**ツール使用に対応したモデル**を選択する必要があります。処理に使うモデル（`documentProcessingModelId` / `imageReviewModelId`）と項目ごとの選択リスト（`availableModels`）は `parameter.ts` で変更できます。ツール使用に対応したモデルの一覧、クロスリージョン推論プロファイルに関する注意、設定例は、[AI モデルのカスタマイズ](./deployment-options.md#ai-モデルのカスタマイズ)をご覧ください。
 
 ## 料金について
 
-このソリューションは、インフラ固定費（約5ドル/日、約150ドル/月：NAT GatewayとAurora Serverless v2）に加えて、ドキュメント処理量に応じたBedrock利用料金が発生します。
+このソリューションでは、インフラ固定費（目安は約 5 ドル/日、約 150 ドル/月。NAT Gateway と Aurora Serverless v2 が主なコスト要因です）に加えて、ドキュメント処理量に応じた Amazon Bedrock の利用料金（従量課金）が発生します。
 
-### Bedrock利用料金（従量課金）
-
-#### 予算重視の軽量モデル（Claude Haiku 4.5など）
-- **処理可能ページ数**: 約80〜85ページ
-- **コスト例（80ページ）**: 約0.28ドル
-
-#### 高精度大容量モデル（Claude Opus 4.5など）
-- **処理可能ページ数**: 約430ページ
-- **コスト例（400ページ）**: 約5.75ドル
+| モデルの種類                                   | 1 回の審査で扱えるページ数 | コスト例             |
+| ---------------------------------------------- | -------------------------- | -------------------- |
+| 予算重視の軽量モデル（Claude Haiku 4.5 など）  | 約 80〜85 ページ           | 80 ページで約 0.28 ドル  |
+| 高精度大容量モデル（Claude Opus 4.6 など）     | 約 430 ページ              | 400 ページで約 5.75 ドル |
 
 > [!Important]
-> - **実際のコストは、サンプルドキュメントでテストして確認してください**
->   - **コスト要因**: テキスト量、画像数・サイズ、チェックリスト項目数により大きく変動（ページ数は目安のみ）
->   - **エージェント機能**（Knowledge Base、Code Interpreterなど）を持つ項目は最大10倍のコスト
->   - 詳細な料金とトークン使用量は、レビュー結果画面で確認できます
-> - Amazon Bedrock Converse APIには4.5MBのファイルサイズ制限があります
-
-最新の料金情報については、[Amazon Bedrock料金ページ](https://aws.amazon.com/jp/bedrock/pricing/)をご覧ください。
-
-## 開発者向け情報
-
-- [開発者ガイド](./developer-guide.md): 技術仕様、アーキテクチャ、開発環境設定
+> - **実際のコストは、お手元のサンプルドキュメントでテストして確認してください。** コストはテキスト量、画像の数とサイズ、チェックリストの項目数により大きく変動します（ページ数は目安のみです）。
+> - **エージェント機能**（Knowledge Bases、Code Interpreter など）を持つ項目は、最大 10 倍のコストがかかることがあります。
+> - 詳細な料金とトークン使用量は、審査結果画面で確認できます。
+> - Amazon Bedrock Converse API には 4.5 MB のファイルサイズ制限があります。
+>
+> 最新の料金情報については、[Amazon Bedrock 料金ページ](https://aws.amazon.com/jp/bedrock/pricing/)をご覧ください。
 
 ## ユーザー権限と管理者セットアップ
 
-### 権限(管理者 / 一般ユーザー)
+### 権限（管理者 / 一般ユーザー）
 
-- **管理者**: すべてのチェックリストセット/レビューを閲覧・操作可能 (owner 制限なし).
-- **一般ユーザー**: 自分が所有するリソースのみアクセス可能.
+- **管理者**: すべてのチェックリストセット／審査を閲覧・操作できます（owner 制限なし）。
+- **一般ユーザー**: 自分が所有するリソースのみアクセスできます（owner 制限あり）。
 
-
-
-
-
-| 対象 | 作成者 | 操作 | 管理者 | 一般ユーザー |
-| --- | --- | --- | --- | --- |
-| チェックリスト | 自分が作成 | 閲覧 | ○ | ○ |
-| チェックリスト | 自分が作成 | 編集 | ○ | ○ |
-| チェックリスト | 自分が作成 | 削除 | ○ | ○ |
-| チェックリスト | 他者が作成 | 閲覧 | ○ | × |
-| チェックリスト | 他者が作成 | 編集 | ○ | × |
-| チェックリスト | 他者が作成 | 削除 | ○ | × |
-| 審査 | 自分が作成 | 閲覧 | ○ | ○ |
-| 審査 | 自分が作成 | 編集 | ○ | ○ |
-| 審査 | 自分が作成 | 削除 | ○ | ○ |
-| 審査 | 他者が作成 | 閲覧 | ○ | × |
-| 審査 | 他者が作成 | 編集 | ○ | × |
-| 審査 | 他者が作成 | 削除 | ○ | × |
+| 対象           | 作成者     | 操作 | 管理者 | 一般ユーザー |
+| -------------- | ---------- | ---- | ------ | ------------ |
+| チェックリスト | 自分が作成 | 閲覧 | ○      | ○            |
+| チェックリスト | 自分が作成 | 編集 | ○      | ○            |
+| チェックリスト | 自分が作成 | 削除 | ○      | ○            |
+| チェックリスト | 他者が作成 | 閲覧 | ○      | ×            |
+| チェックリスト | 他者が作成 | 編集 | ○      | ×            |
+| チェックリスト | 他者が作成 | 削除 | ○      | ×            |
+| 審査           | 自分が作成 | 閲覧 | ○      | ○            |
+| 審査           | 自分が作成 | 編集 | ○      | ○            |
+| 審査           | 自分が作成 | 削除 | ○      | ○            |
+| 審査           | 他者が作成 | 閲覧 | ○      | ×            |
+| 審査           | 他者が作成 | 編集 | ○      | ×            |
+| 審査           | 他者が作成 | 削除 | ○      | ×            |
 
 ### 管理者の初期セットアップ
 
-Cognito のカスタム属性 `rapid_role` が `admin` の場合、管理者として扱われます。
+このプロジェクトは Cognito のカスタム属性 `rapid_role` を使用します。ID トークンに `custom:rapid_role=admin` が含まれる場合、バックエンドはそのユーザーを管理者として扱います。
 
-1. Cognito User Pool で対象ユーザーの `rapid_role` を `admin` に設定
-2. ID トークンに `custom:rapid_role=admin` が含まれることを確認
+1. Cognito User Pool で対象ユーザーのカスタム属性 `rapid_role` を `admin` に設定します。
+2. ログイン後、ID トークンに `custom:rapid_role=admin` が含まれることを確認します。
 
-ローカル開発では `RAPID_LOCAL_DEV=true` で管理者として動作します。
+ローカル開発では `RAPID_LOCAL_DEV=true` を設定すると管理者として動作します。
 
 ## コンタクト
 
@@ -361,8 +275,8 @@ Cognito のカスタム属性 `rapid_role` が `admin` の場合、管理者と�
 
 ## コントリビューション
 
-[CONTRIBUTING](./CONTRIBUTING.md)をご確認ください。
+[CONTRIBUTING](../../CONTRIBUTING.md) をご確認ください。
 
 ## ライセンス
 
-本プロジェクトは [LICENSE](./LICENSE) に記載されたライセンスの下で配布されています。
+本プロジェクトは [LICENSE](../../LICENSE) に記載されたライセンスの下で配布されています。

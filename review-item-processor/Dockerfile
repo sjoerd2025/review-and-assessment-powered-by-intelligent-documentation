@@ -15,8 +15,15 @@ RUN python --version && node --version && npm --version
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-cache
 
+# Constraints for uv/uvx dependency resolution of MCP servers (caps mcp<2;
+# see the file for why). Applied to the build-time install below; at runtime
+# tools/mcp_tool.py injects it as UV_CONSTRAINT into the env of stdio MCP
+# child processes only. Deliberately NOT set as a container-wide ENV here so
+# the agent's own `uv run` startup (UV_OFFLINE/UV_NO_SYNC below) is unaffected.
+COPY mcp-uv-constraints.txt ./mcp-uv-constraints.txt
+
 # Install MCP Proxy for AWS (for Gateway IAM authentication)
-RUN uv tool install mcp-proxy-for-aws
+RUN uv tool install --constraints ./mcp-uv-constraints.txt mcp-proxy-for-aws
 
 COPY . ./
 
