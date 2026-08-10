@@ -86,7 +86,10 @@ task.addRetry({
 
 ### 4. Adding Parameters
 
-1. Define in `parameter-schema.ts`: `reviewMapConcurrency: z.number().int().min(1).optional()`
+1. Define in `parameter-schema.ts` with a default and a description (project
+   convention — the real schema uses `.default(...)`, not `.optional()`):
+   `reviewMapConcurrency: z.number().int().min(1).default(5).describe("...")`.
+   Users override the default in `cdk/lib/parameter.ts` (or via `-c rapid=...`).
 2. Pass to construct in `rapid-stack.ts`
 3. Use in construct constructor
 

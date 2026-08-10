@@ -13,7 +13,7 @@ echo "  This script deploys the RAPID application using AWS CodeBuild."
 echo "  No local environment dependencies - deployment runs entirely in AWS."
 echo ""
 echo "  ⚠️  WARNING: Auto-migration is enabled by default."
-echo "     For production environments, consider using --auto-migrate=false"
+echo "     For production environments, consider using --auto-migrate false"
 echo "==========================================================================="
 echo ""
 

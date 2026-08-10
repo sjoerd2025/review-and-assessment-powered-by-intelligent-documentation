@@ -1,10 +1,16 @@
 # Review & Assessment Powered by Intelligent Documentation (RAPID)
 
-[English](README.md) | [日本語](./docs/ja/README_ja.md)
+| Document                                                            | Language                                                                                 |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| README (this page)                                                  | [English](README.md) \| [日本語](./docs/ja/README_ja.md)                                  |
+| Deployment Options (CloudShell options, closed network, AI models)  | [English](./docs/en/deployment-options.md) \| [日本語](./docs/ja/deployment-options.md)   |
+| Developer Guide (architecture, troubleshooting)                     | [English](./docs/en/developer-guide.md) \| [日本語](./docs/ja/developer-guide.md)         |
+| Local Development (run the app on your machine)                     | [English](./docs/en/local-development.md) \| [日本語](./docs/ja/local-development.md)     |
+| Example Use Cases (industry sample scenarios and documents)         | [English](./examples/en/README.md) \| [日本語](./examples/ja/README.md)                   |
 
 This sample is a document review solution powered by generative AI (Amazon Bedrock). It streamlines review processes involving extensive documents and complex checklists using a Human in the Loop approach. It supports the entire process from checklist structuring to AI-assisted review and final human judgment, reducing review time and improving quality.
 
-![](./docs/imgs/en_summary.png)
+![](./docs/imgs/en_review_result.png)
 
 > [!Important]
 > This tool is intended only for decision support and does not provide professional judgment or legal advice. All final judgments must be made by qualified human experts.
@@ -12,93 +18,86 @@ This sample is a document review solution powered by generative AI (Amazon Bedro
 > [!Warning]
 > This sample may undergo breaking changes without prior notice.
 
-## Key Use Cases
+## How It Works
 
-### Product Specification Compliance Review
+RAPID performs document review in two phases:
 
-Efficiently verify that product development specifications meet requirements and industry standards. Automate the process of comparing thousands of specifications annually against hundreds of checkpoints. AI extracts and structures relevant information from specifications, visualizing compliance results. Reviewers can efficiently perform final verification.
+1. **Build a checklist** – Upload a document (PDF) — such as a regulation, guideline, or specification — that describes what to check and where, and AI extracts the review criteria as a checklist.
+2. **Run a review** – Upload the documents to be reviewed (PDF or images) and pick the checklist to compare them against, and AI evaluates each item as **Pass / Fail**, presenting a confidence score, the AI's rationale, and the documents it referenced.
 
-### Technical Manual Quality Verification
+RAPID runs on AWS serverless services (Amazon CloudFront, API Gateway + Lambda, Step Functions, Aurora Serverless v2, and Amazon Bedrock / AgentCore). See the [Developer Guide](./docs/en/developer-guide.md#architecture) for the architecture diagram.
 
-Verify that complex technical manuals comply with internal guidelines and industry standards. Support the process of comparing tens of thousands of pages of technical documentation annually against thousands of quality criteria. Automatically detect missing technical information and inconsistencies, supporting the creation of consistent, high-quality manuals.
+## Key Features
 
-### Procurement Document Compliance Verification
+- **AI checklist extraction** – Converts regulations, guidelines, specifications, and the like into a checklist.
+- **AI document review** – Judges each checklist item as Pass / Fail and presents a confidence score, the AI's rationale, and the documents it referenced.
+- **Per-checklist-item model selection** – Assigns any generative AI model to each checklist item, so you can spend higher-cost models only on the difficult checks.
+- **Agent tools** – Equips a checklist item with **Amazon Bedrock Knowledge Bases** (RAG), the **AgentCore Code Interpreter** (code execution for calculations and validation), and **MCP (Model Context Protocol)** servers when the check needs knowledge from external tools.
+- **Customizable prompts** – Lets you review and edit the system prompts used for checklist extraction on a dedicated Prompt Management screen.
+- **Example use cases gallery** – Ships with industry sample scenarios (real estate, IT, manufacturing, healthcare, corporate governance, and more), so you can try RAPID's document review right away.
+- **Closed / private network deployment** – Runs RAPID without exposing it to the internet. Combined with **AWS Site-to-Site VPN** or **AWS Direct Connect**, you can use RAPID from your on-premises network over fully private connectivity. See [Closed / Private Network Deployment](#closed--private-network-deployment).
+- **Concurrency control** – Keeps reviews within Amazon Bedrock's quotas by controlling how many run concurrently.
 
-Check that procurement documents and proposals meet necessary requirements. Automatically extract required information from documents spanning hundreds of pages, streamlining thousands of document reviews annually. Improve procurement process speed and accuracy by having humans verify compliance results against requirement lists.
-
-## Screenshots
+<details>
+<summary><strong>Screenshots of the main screens</strong> (click to expand)</summary>
 
 ![](./docs/imgs/en_new_review.png)
+
 ![](./docs/imgs/en_new_review_floor_plan.png)
+
 ![](./docs/imgs/en_review_result.png)
+
 ![](./docs/imgs/en_review_result_ng.png)
+
+</details>
+
+## Key Use Cases
+
+- **Product specification compliance review** – Verify that product specifications meet requirements and industry standards, and let reviewers concentrate on the final confirmation.
+- **Technical manual quality verification** – Check that technical manuals comply with internal guidelines and industry standards, and detect missing information and inconsistencies automatically.
+- **Procurement document compliance verification** – Extract the required information from procurement documents and proposals spanning hundreds of pages, and have humans verify the compliance results.
+
+Concrete scenarios with sample documents are available in the [examples gallery](./examples/en/README.md).
 
 ## Deployment Methods
 
-There are two methods for deployment:
-
 ### 1. Deployment Using CloudShell (For Those Who Want to Start Easily)
 
-This method allows you to deploy directly from your browser using AWS CloudShell without preparing a local environment.
+This method allows you to deploy directly from your browser using AWS CloudShell, without preparing a local environment.
 
-1. **Enable Amazon Bedrock Models**
+1. **Enable Amazon Bedrock models**
 
-   Access Bedrock Model Access from the AWS Management Console and enable access to the following models:
-
-   - Anthropic Claude 3.7 Sonnet
-   - Amazon Nova Premier
-
-   By default, the Oregon (us-west-2) region is used, but you can change it with the `--bedrock-region` option.
+   Access Bedrock Model Access from the AWS Management Console and enable access to the models you plan to use (see [AI Model Customization](./docs/en/deployment-options.md#ai-model-customization) for the model list). By default, the Oregon (us-west-2) region is used for Amazon Bedrock, but you can change it with the `--bedrock-region` option.
 
 2. **Open AWS CloudShell**
 
    Open [AWS CloudShell](https://console.aws.amazon.com/cloudshell/home) in the region where you want to deploy.
 
-3. **Run the Deployment Script**
+3. **Run the deployment script**
 
    ```bash
    wget -O - https://raw.githubusercontent.com/aws-samples/review-and-assessment-powered-by-intelligent-documentation/main/bin.sh | bash
    ```
 
-   This one-liner command automatically executes everything from repository cloning to deployment.
+   This command automatically executes everything from repository cloning to deployment. Upon completion, the frontend URL and the API URL are displayed; open the frontend URL in your browser to start using the application.
 
-4. **Specify Custom Parameters (Optional)**
+4. **Specify custom options (optional)**
 
    ```bash
    wget -O - https://raw.githubusercontent.com/aws-samples/review-and-assessment-powered-by-intelligent-documentation/main/bin.sh | bash -s -- --ipv4-ranges '["192.168.0.0/16"]'
    ```
 
-   Available options:
-
-   - `--ipv4-ranges`: IPv4 address ranges to allow in the frontend WAF (JSON array format)
-   - `--ipv6-ranges`: IPv6 address ranges to allow in the frontend WAF (JSON array format)
-   - `--disable-ipv6`: Disable IPv6 support
-   - `--auto-migrate`: Whether to automatically run database migration during deployment
-   - `--cognito-self-signup`: Whether to enable self-signup for the Cognito User Pool (true/false)
-   - `--cognito-user-pool-id`: Existing Cognito User Pool ID (creates new if not specified)
-   - `--cognito-user-pool-client-id`: Existing Cognito User Pool Client ID (creates new if not specified)
-   - `--cognito-domain-prefix`: Prefix for the Cognito domain (auto-generated if not specified)
-   - `--s3-api-gateway-frontend`: Serve the SPA from S3 via a REGIONAL API Gateway instead of CloudFront (true/false)
-   - `--closed-network`: Deploy fully private (isolated subnets, VPC endpoints, PRIVATE API Gateways); implies `--s3-api-gateway-frontend` (true/false)
-   - `--agentcore-network-mode`: AgentCore Runtime network mode when closed (`PUBLIC` = internet access / MCP works, `VPC` = full isolation). Default: `PUBLIC`
-   - `--bedrock-region`: Region to use for Amazon Bedrock (default: us-west-2)
-   - `--document-model`: AI model ID for document processing (default: global.anthropic.claude-sonnet-4-6)
-   - `--image-model`: AI model ID for image review processing (default: global.anthropic.claude-sonnet-4-6)
-   - `--repo-url`: URL of the repository to deploy
-   - `--branch`: Branch name to deploy
-   - `--tag`: Deploy a specific Git tag
-
-5. **Post-Deployment Verification**
-
-   Upon completion of the deployment, the frontend URL and API URL will be displayed.
-   Access the displayed URL to start using the application.
+   Options such as `--ipv4-ranges` and `--closed-network` correspond to the CDK parameters described in [Parameter Customization](#parameter-customization). For the full list of options, see [CloudShell Deployment Options](./docs/en/deployment-options.md#cloudshell-deployment-options).
 
 > [!Important]
-> With this deployment method, if you do not set option parameters, anyone who knows the URL can sign up. For production use, we strongly recommend adding IP address restrictions and disabling self-signup (`--cognito-self-signup=false`).
+> With this deployment method, if you do not set option parameters, anyone who knows the URL can sign up. For production use, we strongly recommend adding IP address restrictions and disabling self-signup (`--cognito-self-signup false`).
 
 ### 2. Deployment from Local Environment (Recommended for Customization)
 
-- Clone this repository
+> [!Note]
+> This method requires **Docker** to be installed and running locally, because the CDK build bundles several Lambda functions as container images (Prisma database migration, review processor, AgentCore runtime). Node.js and AWS credentials with permissions for the target account / region are also required.
+
+- Clone this repository:
 
 ```
 git clone https://github.com/aws-samples/review-and-assessment-powered-by-intelligent-documentation.git
@@ -106,29 +105,36 @@ cd review-and-assessment-powered-by-intelligent-documentation
 ```
 
 - Edit [parameter.ts](./cdk/lib/parameter.ts) as needed. See [Parameter Customization](#parameter-customization) for details.
-- Before deploying CDK, you need to bootstrap once for the target region.
+- Bootstrap the target region once before the first deployment. The exported `AWS_DEFAULT_REGION` applies to both the bootstrap and the deployment; you can also specify the region per command with `npx cdk bootstrap aws://<account-id>/<region>` instead. Run `npm ci` in `cdk/` before bootstrapping: `cdk bootstrap` loads the CDK app in `cdk/bin/rapid.ts`, so on a fresh clone it fails before reaching AWS. The app also bootstraps `us-east-1` for the CloudFront WAF stack (skipped in the S3 + API Gateway and closed-network frontend modes).
 
 ```
 cd cdk
+npm ci
+export AWS_DEFAULT_REGION="<region>"
 npx cdk bootstrap
 ```
 
-- Deploy (builds all packages and deploys automatically)
+- Deploy (this builds all packages and deploys them automatically):
 
 ```
+cd cdk
 npm run deploy
 ```
 
 <details><summary>Manual step-by-step deployment</summary>
 
+Prepare the backend:
+
 ```bash
-# Prepare the backend
 cd backend
 npm ci
 npm run prisma:generate
 npm run build
+```
 
-# Install CDK packages and deploy
+Then install the CDK packages and deploy:
+
+```bash
 cd ../cdk
 npm ci
 npx cdk deploy --require-approval never --all
@@ -148,180 +154,88 @@ Output:
 RapidStack.FrontendURL = https://xxxxx.cloudfront.net
 ```
 
+### Cleaning Up (Destroying the Stacks)
+
+To remove everything this sample created and stop incurring costs, destroy both CDK stacks. Run this from the `cdk` directory:
+
+```bash
+cd cdk
+npx cdk destroy --all
+```
+
+`--all` lets CDK delete the stacks in dependency order (it removes `RapidStack` before `RapidFrontendWafStack`, which lives in **us-east-1**).
+
+> [!Warning]
+> This is a sample/demo configuration: the S3 buckets, the Aurora database, and — when the stack created it — the Cognito User Pool are all removed on destroy, **including all data and user accounts**. There is no retention or deletion protection. Back up anything you need first, and for real workloads consider changing these removal policies.
+
+A few resources are not removed automatically, such as an imported Cognito User Pool, some CloudWatch Logs log groups, and the `RapidCodeBuildDeploy` stack created by the CloudShell deployment. In VPC mode, `cdk destroy` can also fail temporarily with `DELETE_FAILED` while service-managed ENIs are released. See [Cleanup Details](./docs/en/deployment-options.md#cleanup-details) for both topics.
+
 ## Parameter Customization
 
-The following parameters can be customized during CDK deployment:
+The following parameters can be customized during CDK deployment. Edit [`cdk/lib/parameter.ts`](./cdk/lib/parameter.ts):
 
-| Parameter Group           | Parameter Name                | Description                                                                                                                                                                | Default Value                              |
-| ------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| **WAF Configuration**     | allowedIpV4AddressRanges      | IPv4 ranges to allow in the frontend WAF                                                                                                                                   | ["0.0.0.0/1", "128.0.0.0/1"] (all allowed) |
-|                           | allowedIpV6AddressRanges      | IPv6 ranges to allow in the frontend WAF                                                                                                                                   | ["0000::/1", "8000::/1"] (all allowed)     |
-| **Cognito Settings**      | cognitoUserPoolId             | Existing Cognito User Pool ID                                                                                                                                              | Create new                                 |
-|                           | cognitoUserPoolClientId       | Existing Cognito User Pool Client ID                                                                                                                                       | Create new                                 |
-|                           | cognitoDomainPrefix           | Cognito domain prefix                                                                                                                                                      | Auto-generated                             |
-|                           | cognitoSelfSignUpEnabled      | Whether to enable self-signup for Cognito User Pool                                                                                                                        | true (enabled)                             |
-| **Migration**             | autoMigrate                   | Whether to automatically run migration during deployment                                                                                                                   | true (auto-run)                            |
-| **Citations API**         | enableCitations               | Whether to enable Citations API for PDF documents ([AWS announcement](https://aws.amazon.com/about-aws/whats-new/2025/06/citations-api-pdf-claude-models-amazon-bedrock/)) | true (enabled)                             |
-| **Map State Concurrency** | reviewMapConcurrency          | Map State concurrency for the Review Processor (must be configured in consultation with throttling limits)                                                                 | 1                                          |
-| **Map State Concurrency** | checklistInlineMapConcurrency | Inline Map State concurrency for the Checklist Processor (must be configured in consultation with throttling limits)                                                       | 1                                          |
-| **Review Queue Settings** | reviewMaxConcurrency          | Max concurrent Step Functions executions for the review queue consumer                                                                                                    | 2                                          |
-| **Review Queue Settings** | reviewQueueMaxDepth           | Max queue depth before the API returns a global concurrency limit error                                                                                                   | 10                                         |
-| **Review Queue Settings** | reviewQueueMaxQueueCountMs    | Max wait time in ms before error handling in the review queue consumer                                                                                                    | 86,400,000 (24h)                           |
-| **Review Queue Settings** | reviewQueueLogLevel           | Review queue lambda log level                                                                                                                                            | WARNING                                    |
-| **Model Selection**       | availableModels                      | List of models available for per-checklist-item model selection. Set to empty array `[]` to disable the model selection UI                                            | Claude Opus 4.6, Claude Sonnet 4.6, Claude Haiku 4.5, Claude Sonnet 4 |
-| **Network Mode**          | s3ApiGatewayFrontend          | Serve the SPA from S3 via a dedicated REGIONAL API Gateway (S3 proxy) instead of CloudFront, keeping standard networking                                              | false                                      |
-| **Network Mode**          | closedNetwork                 | Fully private mode: isolated subnets, no NAT, VPC endpoints, PRIVATE API Gateways, Cognito PrivateLink. Implies `s3ApiGatewayFrontend`                                 | false                                      |
-| **Network Mode**          | agentCoreNetworkMode          | AgentCore Runtime network mode (only applies when `closedNetwork`). `PUBLIC` = runtime has internet (MCP/uv work); `VPC` = runtime fully isolated. Invoke path is private either way | PUBLIC                                     |
-| **Schedule Settings**     | feedbackAggregatorScheduleExpression | Feedback Aggregator execution schedule (EventBridge Scheduler expression format)                                                                                     | cron(0 2 * * ? *) (Daily at 2:00 UTC)     |
+| Parameter Group           | Parameter Name                       | Description                                                                                                                                                                | Default Value                              |
+| ------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **WAF Configuration**     | allowedIpV4AddressRanges             | IPv4 ranges to allow in the frontend WAF                                                                                                                                   | ["0.0.0.0/1", "128.0.0.0/1"] (all allowed) |
+|                           | allowedIpV6AddressRanges             | IPv6 ranges to allow in the frontend WAF                                                                                                                                   | ["0000::/1", "8000::/1"] (all allowed)     |
+| **Cognito Settings**      | cognitoUserPoolId                    | Existing Cognito User Pool ID                                                                                                                                              | Create new                                 |
+|                           | cognitoUserPoolClientId              | Existing Cognito User Pool Client ID                                                                                                                                       | Create new                                 |
+|                           | cognitoDomainPrefix                  | Prefix for the Cognito domain                                                                                                                                              | Auto-generated                             |
+|                           | cognitoSelfSignUpEnabled             | Whether to enable self-signup for the Cognito User Pool                                                                                                                    | true (enabled)                             |
+| **Migration**             | autoMigrate                          | Whether to automatically run database migration during deployment                                                                                                          | true (auto-run)                            |
+| **MCP Features**          | mcpAdmin                             | Whether to grant admin permissions to the MCP runtime Lambda function                                                                                                      | false (disabled)                           |
+| **Citations API**         | enableCitations                      | Whether to enable the Citations API for PDF documents ([AWS announcement](https://aws.amazon.com/about-aws/whats-new/2025/06/citations-api-pdf-claude-models-amazon-bedrock/)) | true (enabled)                             |
+| **Model Selection**       | availableModels                      | List of models available for per-checklist-item model selection. Set to an empty array `[]` to disable the model selection UI                                              | Claude Opus 4.6, Claude Sonnet 4.6, Claude Haiku 4.5, Claude Sonnet 4 |
+| **Network Mode**          | s3ApiGatewayFrontend                 | Serve the SPA from S3 via a dedicated REGIONAL API Gateway (S3 proxy) instead of CloudFront, keeping standard networking. See [Closed / Private Network Deployment](#closed--private-network-deployment). | false                                      |
+|                           | closedNetwork                        | Fully private mode: isolated subnets, no NAT, VPC endpoints, PRIVATE API Gateways, Cognito PrivateLink. Implies `s3ApiGatewayFrontend`. See [Closed / Private Network Deployment](#closed--private-network-deployment). | false                                      |
+|                           | agentCoreNetworkMode                 | AgentCore Runtime network mode (only applies when `closedNetwork`). `PUBLIC` = runtime has internet (MCP/uv work); `VPC` = runtime fully isolated. Invoke path is private either way | PUBLIC                                     |
+| **Map State Concurrency** | reviewMapConcurrency                 | Map State concurrency for the Review Processor (must be configured in consultation with throttling limits)                                                                 | 1                                          |
+|                           | checklistInlineMapConcurrency        | Inline Map State concurrency for the Checklist Processor (must be configured in consultation with throttling limits)                                                       | 1                                          |
+| **Review Queue Settings** | reviewMaxConcurrency                 | Max concurrent Step Functions executions for the review queue consumer                                                                                                     | 2                                          |
+|                           | reviewQueueMaxDepth                  | Max queue depth before the API returns a global concurrency limit error                                                                                                    | 10                                         |
+|                           | reviewQueueMaxQueueCountMs           | Max wait time in ms before error handling in the review queue consumer                                                                                                     | 86,400,000 (24h)                           |
+|                           | reviewQueueLogLevel                  | Log level for the review queue consumer Lambda                                                                                                                             | WARNING                                    |
+| **Schedule Settings**     | feedbackAggregatorScheduleExpression | Feedback Aggregator execution schedule (EventBridge Scheduler expression format)                                                                                           | cron(0 2 * * ? *) (Daily at 2:00 UTC)      |
 
 **Schedule Expression Format:**
+
 - Cron format: `cron(minute hour day month day-of-week year)` - Example: `cron(0 2 * * ? *)` (Daily at 2:00 UTC)
 - Rate format: `rate(value unit)` - Example: `rate(1 day)` (Every day), `rate(12 hours)` (Every 12 hours)
 - Details: [Schedule types on EventBridge Scheduler](https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html)
 
+> [!Caution]
+> The default values prioritize an easy trial over production hardening:
+>
+> - **WAF IP restrictions**: the defaults allow **all** IP addresses. For production, set the specific IP ranges you want to allow.
+> - **Self-signup** is enabled by default. For production use, we strongly recommend setting `cognitoSelfSignUpEnabled: false`; leaving it enabled allows anyone who reaches the URL to register an account.
+> - **autoMigrate** runs database migrations automatically on every deployment. For production environments or environments containing important data, consider setting it to `false` and controlling migrations manually.
+
 ### Closed / Private Network Deployment
 
-By default the app is deployed **publicly** (CloudFront + S3, reachable over the internet). Two
-optional parameters change how the frontend is served and whether the deployment is network-isolated:
+Setting `closedNetwork: true` deploys RAPID in a fully closed configuration: the VPC has only isolated subnets (no NAT / Internet Gateway), runtime AWS access goes through VPC endpoints, and both API Gateways become PRIVATE endpoints. The application is then reachable only from inside the VPC — for example from your on-premises network connected via AWS Client VPN, AWS Site-to-Site VPN, or AWS Direct Connect. If you only need to avoid CloudFront while staying publicly reachable, use `s3ApiGatewayFrontend: true` instead.
 
-- **`s3ApiGatewayFrontend`** (default `false`): serve the SPA from S3 via a REGIONAL API Gateway
-  (S3 proxy) instead of CloudFront. Still public; standard networking (NAT). Useful if CloudFront
-  is not desired.
-- **`closedNetwork`** (default `false`): deploy fully **private** — isolated subnets with no NAT or
-  internet gateway, all AWS access via VPC endpoints (incl. Bedrock, `bedrock-agentcore`, S3,
-  Cognito PrivateLink), PRIVATE API Gateways locked to the VPC endpoint, and a REGIONAL WAF on the
-  API stages. This automatically implies `s3ApiGatewayFrontend` (CloudFront cannot be used in a
-  closed network).
-- **`agentCoreNetworkMode`** (default `PUBLIC`): controls the AgentCore Runtime's network mode in
-  closed mode (see the detailed trade-offs below).
-
-Both are set in `cdk/lib/parameter.ts` (or via `-c`, e.g. `npx cdk deploy -c rapid.closedNetwork=true`),
-or via the CloudShell script flags `--s3-api-gateway-frontend` / `--closed-network`.
-
-When `closedNetwork: true`:
-
-- **Deploy-time internet is still required** (to build/push container images and run the frontend
-  build). Only the deployed resources' *runtime* network path is isolated. Fully offline deploys are
-  out of scope.
-- **Access is only from inside the VPC** — the PRIVATE APIs are unreachable from the public internet.
-  Reach the app from a host on the VPC network (e.g. an EC2 with a browser, or Client VPN).
-- **Auth**: only username/password (SRP) sign-in works over the Cognito PrivateLink endpoint. Hosted
-  UI / OAuth / federated sign-in are **not** supported. Not available in GovCloud.
-- **AgentCore Runtime network mode** (`agentCoreNetworkMode`, default `PUBLIC`): controls whether the
-  agent runtime runs on AWS-managed networking (`PUBLIC`) or inside the isolated VPC (`VPC`). The
-  invoke path (Lambda → AgentCore) is always private via the `bedrock-agentcore` VPC endpoint
-  regardless. Use `PUBLIC` (default) unless you require the runtime compute itself to have no internet
-  access. **Trade-offs:**
-  - `PUBLIC`: runtime has internet — stdio/public-HTTP **MCP tools** and `uv`/`npx` runtime fetches work.
-  - `VPC`: runtime has **no internet** — stdio and public-HTTP MCP tools do **not** work; only in-VPC
-    HTTP MCP servers or AgentCore Gateway MCP tools work. Maximum isolation.
-- **`bedrockRegion` must match the deployment region** — the `bedrock-runtime` endpoint cannot
-  privately reach a different region. `global.*` inference profiles still work but may route data
-  cross-region (a synth-time warning is emitted); use region-pinned IDs for data residency.
-- **Enabling/disabling `closedNetwork` is not an in-place change** — the VPC topology change forces
-  replacement. Deploy it to a fresh stack/region (run `cdk diff` first; snapshot Aurora before any
-  destroy).
+Closed network mode comes with several constraints — deployment itself still requires internet access, authentication is limited to Cognito SRP, and toggling the mode on an existing stack replaces the VPC, among others. Be sure to read [Closed / Private Network Deployment](./docs/en/deployment-options.md#closed--private-network-deployment) before enabling it.
 
 ### AI Model Customization
 
-This application uses Strands agents with tools such as file reading, so you must select **models that support tool use**.
-
-**Examples of tool use supported models**:
-
-- `global.anthropic.claude-opus-4-6-v1` (Claude Opus 4.6 Global)
-- `global.anthropic.claude-sonnet-4-6` (Claude Sonnet 4.6 Global)
-- `us.anthropic.claude-sonnet-4-6` (Claude Sonnet 4.6 US)
-- `eu.anthropic.claude-sonnet-4-6` (Claude Sonnet 4.6 EU)
-- `jp.anthropic.claude-sonnet-4-6` (Claude Sonnet 4.6 JP)
-- `global.anthropic.claude-haiku-4-5-20251001-v1:0` (Claude Haiku 4.5 Global)
-- `global.anthropic.claude-opus-4-5-20251101-v1:0` (Claude Opus 4.5 Global)
-- `global.anthropic.claude-sonnet-4-5-20250929-v1:0` (Claude Sonnet 4.5 Global)
-- `us.anthropic.claude-sonnet-4-5-20250929-v1:0` (Claude Sonnet 4.5 US)
-- `eu.anthropic.claude-sonnet-4-5-20250929-v1:0` (Claude Sonnet 4.5 EU)
-- `jp.anthropic.claude-sonnet-4-5-20250929-v1:0` (Claude Sonnet 4.5 JP)
-- `global.anthropic.claude-sonnet-4-20250514-v1:0` (Claude Sonnet 4 Global)
-- `us.anthropic.claude-sonnet-4-20250514-v1:0` (Claude Sonnet 4 US)
-- `eu.anthropic.claude-sonnet-4-20250514-v1:0` (Claude Sonnet 4 EU)
-- `apac.anthropic.claude-sonnet-4-20250514-v1:0` (Claude Sonnet 4 APAC)
-- `mistral.mistral-large-2407-v1:0` (Mistral Large 2)
-- `us.amazon.nova-premier-v1:0` (Amazon Nova Premier)
-- `us.amazon.nova-2-omni-v1:0` (Amazon Nova 2 Omni)
-
-**Important Notes**:
-
-- **Cross-region inference profiles**: When using cross-region inference, regional prefixes like `us.`, `eu.`, `apac.` are required for model IDs
-
-- **Official Documentation**: [Supported models and model features - Amazon Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference-supported-models-features.html)
-
-**Configuration Example**:
-
-```typescript
-// cdk/lib/parameter.ts
-export const parameters = {
-  documentProcessingModelId: "global.anthropic.claude-sonnet-4-6", // Claude Sonnet 4.6 (Global)
-  bedrockRegion: "us-west-2", // Oregon region
-  // ...
-};
-```
-
-To configure these, directly edit the `cdk/lib/parameter.ts` file.
-
-### Per-Checklist-Item Model Selection
-
-By default, each checklist item can be assigned a specific AI model from the `availableModels` list. The default set includes Claude Opus 4.6, Sonnet 4.6, Haiku 4.5, and Sonnet 4 (Global). When no model is selected for an item, `documentProcessingModelId` (default: `global.anthropic.claude-sonnet-4-6`) is used for documents, and `imageReviewModelId` (default: `global.anthropic.claude-sonnet-4-6`) is used for images.
-
-To customize the available models:
-
-```typescript
-// cdk/lib/parameter.ts
-export const parameters = {
-  availableModels: [
-    { modelId: "global.anthropic.claude-opus-4-6-v1", displayName: "Claude Opus 4.6 (Global)" },
-    { modelId: "global.anthropic.claude-sonnet-4-6", displayName: "Claude Sonnet 4.6 (Global)" },
-    { modelId: "global.anthropic.claude-haiku-4-5-20251001-v1:0", displayName: "Claude Haiku 4.5 (Global)" },
-    { modelId: "global.anthropic.claude-sonnet-4-20250514-v1:0", displayName: "Claude Sonnet 4 (Global)" },
-  ],
-};
-```
-
-To disable the model selection UI entirely, set `availableModels` to an empty array:
-
-```typescript
-export const parameters = {
-  availableModels: [],
-};
-```
-
-> [!CAUTION]
-> For production environments, it is strongly recommended to set `cognitoSelfSignUpEnabled: false` to disable self-signup. Leaving self-signup enabled allows anyone to register an account, which may pose a security risk.
-> By default, the `autoMigrate` parameter is set to `true`, which automatically runs database migrations during deployment. For production environments or environments containing important data, consider setting this parameter to `false` and controlling migrations manually.
+RAPID uses Strands agents with tools such as file reading, so you must select **models that support tool use**. You can change the processing models (`documentProcessingModelId` / `imageReviewModelId`) and the per-item selection list (`availableModels`) in `parameter.ts`. For the list of tool-use capable models, notes on cross-region inference profiles, and configuration examples, see [AI Model Customization](./docs/en/deployment-options.md#ai-model-customization).
 
 ## Pricing
 
-This solution incurs infrastructure fixed costs (~$5/day, ~$150/month for NAT Gateway and Aurora Serverless v2) plus Bedrock usage costs based on document processing volume.
+This solution incurs infrastructure fixed costs (~$5/day, ~$150/month, mainly for the NAT Gateway and Aurora Serverless v2) plus Amazon Bedrock usage costs based on document processing volume (pay-per-use).
 
-### Bedrock Usage Costs (Pay-per-use)
-
-#### Budget-Friendly Lightweight Model (Claude Haiku 4.5, etc.)
-- **Processable Pages**: ~80-85 pages
-- **Cost Example (80 pages)**: ~$0.28
-
-#### High-Accuracy Large-Capacity Model (Claude Opus 4.6, etc.)
-- **Processable Pages**: ~430 pages
-- **Cost Example (400 pages)**: ~$5.75
+| Model class                                                | Processable pages per review | Cost example         |
+| ---------------------------------------------------------- | ---------------------------- | -------------------- |
+| Budget-friendly lightweight model (Claude Haiku 4.5, etc.) | ~80–85 pages                 | ~$0.28 for 80 pages  |
+| High-accuracy large-capacity model (Claude Opus 4.6, etc.) | ~430 pages                   | ~$5.75 for 400 pages |
 
 > [!Important]
-> - **Please test with your sample documents to determine actual costs**
->   - **Cost factors**: Text volume, image count/size, checklist items vary significantly (page count is rough estimate only)
->   - **Agent features** (Knowledge Base, Code Interpreter, etc.) may incur up to 10x higher costs
->   - Detailed pricing and token usage can be viewed in the review results screen
-> - Amazon Bedrock Converse API has a 4.5MB file size limit
-
-For the latest pricing information, please visit the [Amazon Bedrock Pricing page](https://aws.amazon.com/bedrock/pricing/).
-
-## Developer Information
-
-- [Developer Guide](./docs/en/developer-guide.md): Technical specifications, architecture, development environment setup
+> - **Please test with your own sample documents to determine actual costs.** Costs vary significantly with text volume, image count / size, and the number of checklist items (page counts are rough estimates only).
+> - **Agent features** (Knowledge Bases, Code Interpreter, etc.) may incur up to 10x higher costs.
+> - Detailed pricing and token usage can be viewed on the review results screen.
+> - The Amazon Bedrock Converse API has a 4.5 MB file size limit.
+>
+> For the latest pricing information, please visit the [Amazon Bedrock pricing page](https://aws.amazon.com/bedrock/pricing/).
 
 ## User Roles and Admin Setup
 
@@ -330,20 +244,20 @@ For the latest pricing information, please visit the [Amazon Bedrock Pricing pag
 - **Admin**: Can view and operate on all checklist sets and review jobs (no owner restriction).
 - **General user**: Can access only resources they own (owner-restricted).
 
-| Resource | Owner | Action | Admin | General User |
-| --- | --- | --- | --- | --- |
-| Checklist | Self-created | View | O | O |
-| Checklist | Self-created | Edit | O | O |
-| Checklist | Self-created | Delete | O | O |
-| Checklist | Created by others | View | O | X |
-| Checklist | Created by others | Edit | O | X |
-| Checklist | Created by others | Delete | O | X |
-| Review | Self-created | View | O | O |
-| Review | Self-created | Edit | O | O |
-| Review | Self-created | Delete | O | O |
-| Review | Created by others | View | O | X |
-| Review | Created by others | Edit | O | X |
-| Review | Created by others | Delete | O | X |
+| Resource  | Owner             | Action | Admin | General User |
+| --------- | ----------------- | ------ | ----- | ------------ |
+| Checklist | Self-created      | View   | O     | O            |
+| Checklist | Self-created      | Edit   | O     | O            |
+| Checklist | Self-created      | Delete | O     | O            |
+| Checklist | Created by others | View   | O     | X            |
+| Checklist | Created by others | Edit   | O     | X            |
+| Checklist | Created by others | Delete | O     | X            |
+| Review    | Self-created      | View   | O     | O            |
+| Review    | Self-created      | Edit   | O     | O            |
+| Review    | Self-created      | Delete | O     | O            |
+| Review    | Created by others | View   | O     | X            |
+| Review    | Created by others | Edit   | O     | X            |
+| Review    | Created by others | Delete | O     | X            |
 
 ### Admin Initial Setup
 

@@ -10,5 +10,11 @@ cdk.out
 # CDK context - contains environment-specific values
 cdk.context.json
 
+# CDK deploy outputs - contains environment-specific infrastructure identifiers
+# (account IDs, Cognito pool/client IDs, API/RDS endpoints, ARNs, bucket names).
+# これらは `cdk deploy --outputs-file` で各自
+# 再生成できるビルド生成物であり、実デプロイの識別子をリポジトリにコミットしない。
+outputs*.json
+
 # Log files
 *.log

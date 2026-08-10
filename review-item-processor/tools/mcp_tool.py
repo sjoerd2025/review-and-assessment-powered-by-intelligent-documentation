@@ -1,8 +1,44 @@
+from pathlib import Path
 from typing import List, Optional, Any, Dict
 from strands.tools.mcp import MCPClient
-from mcp.client.stdio import stdio_client, StdioServerParameters
+from mcp.client.stdio import (
+    get_default_environment,
+    stdio_client,
+    StdioServerParameters,
+)
 from mcp.client.streamable_http import streamablehttp_client
 from logger import logger
+
+# uvx が MCP サーバの依存を解決するときに適用する制約ファイル (mcp<2)。
+# イメージ内では Dockerfile の COPY により /app/mcp-uv-constraints.txt に置かれる
+# (このファイルの親ディレクトリ = review-item-processor/ 直下)。
+_UV_CONSTRAINTS_FILE = Path(__file__).resolve().parent.parent / "mcp-uv-constraints.txt"
+
+
+def _build_stdio_env() -> Optional[Dict[str, str]]:
+    """stdio MCP 子プロセスへ渡す env を構築する。
+
+    SDK 既定 env（os.environ を継承しないため AWS 資格情報等は渡らない）に
+    UV_CONSTRAINT だけを加算する。制約が無いと、上限を宣言しない MCP サーバ
+    (mcp-server-fetch 等) が mcp 2.0.0 (2026-07-28 公開・破壊的変更) を解決して
+    import 時に即死し、"MCP error -32000: Connection closed" になる。
+    制約ファイルが無い環境（ローカル実行・テスト）では None を返し、
+    SDK 既定の env 構築（従来の挙動）に委ねる。
+    """
+    if not _UV_CONSTRAINTS_FILE.is_file():
+        return None
+    path = str(_UV_CONSTRAINTS_FILE)
+    # uv は UV_CONSTRAINT を空白区切りの複数ファイル指定として解釈するため、
+    # パスに空白を含むと分割されて "File not found" になる。イメージ内 (/app) は
+    # 空白を含まないが、空白を含むディレクトリでのローカル開発では制約なしに
+    # フォールバックする。
+    if any(ch.isspace() for ch in path):
+        logger.warning(
+            "Skipping MCP uv constraints: path contains whitespace, which uv "
+            "would split into multiple files."
+        )
+        return None
+    return {**get_default_environment(), "UV_CONSTRAINT": path}
 
 
 def create_mcp_clients(mcp_config: Optional[Dict[str, Dict[str, Any]]]) -> List[MCPClient]:
@@ -92,9 +128,12 @@ def _create_stdio_client(config: Dict[str, Any], server_name: str) -> Optional[M
     command = config.get("command", "uvx")
     args = config["args"]
 
+    # 既存挙動どおり os.environ は無条件展開せず、SDK 既定の安全な env を用いる。
+    # 加算するのは UV_CONSTRAINT (mcp<2) のみ（_build_stdio_env 参照）。
+    env = _build_stdio_env()
     client = MCPClient(
-        lambda a=args, c=command: stdio_client(
-            StdioServerParameters(command=c, args=a)
+        lambda a=args, c=command, e=env: stdio_client(
+            StdioServerParameters(command=c, args=a, env=e)
         )
     )
     logger.debug(f"Created stdio MCP client '{server_name}': {command} {args}")
