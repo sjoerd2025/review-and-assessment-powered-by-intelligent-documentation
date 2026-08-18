@@ -239,7 +239,8 @@ Resources:
                 },
                 "on-failure": "ABORT",
                 "commands": [
-                  "npm install -g npm@latest"
+                  "node --version",
+                  "npm --version"
                 ]
               },
               "build": {
