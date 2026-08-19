@@ -235,13 +235,9 @@ Resources:
             "phases": {
               "install": {
                 "runtime-versions": {
-                  "nodejs": "20"
+                  "nodejs": "24"
                 },
-                "on-failure": "ABORT",
-                "commands": [
-                  "node --version",
-                  "npm --version"
-                ]
+                "on-failure": "ABORT"
               },
               "build": {
                 "commands": [
